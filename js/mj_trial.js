@@ -302,7 +302,7 @@ var GameScene = Class.create(Scene, {
         this.addChild(this.answer_bt);
 
         // 出題
-        this.make_quiz(true);
+        this.make_quiz();
 
         scene_no = SCENE_GAME;
     },
@@ -392,7 +392,7 @@ var GameScene = Class.create(Scene, {
     },
 
     // 出題
-    make_quiz : function(ripai_flag) {
+    make_quiz : function() {
         for (var i in this.question) {
             this.removeChild(this.question[i]);
         }
@@ -417,16 +417,28 @@ var GameScene = Class.create(Scene, {
         this.question = this.question.slice(0, 13);
 
         // 理牌
-        if (ripai_flag) {
-            for (var i = 0; i < this.question.length - 1; i++) {
-                for (var j = i + 1; j < this.question.length; j++) {
-                    if (this.question[i].hai_no > this.question[j].hai_no) {
-                        var tmp = this.question[i].hai_no;
-                        this.question[i].setHaiNo(this.question[j].hai_no);
-                        this.question[j].setHaiNo(tmp);
-                    }
+        for (var i = 0; i < this.question.length - 1; i++) {
+            for (var j = i + 1; j < this.question.length; j++) {
+                if (this.question[i].hai_no > this.question[j].hai_no) {
+                    var tmp = this.question[i].hai_no;
+                    this.question[i].setHaiNo(this.question[j].hai_no);
+                    this.question[j].setHaiNo(tmp);
                 }
             }
+        }
+
+        // 得点によって理牌を崩す
+        var shuffle_count = this.shuffle_count(this.score);
+        // console.log(shuffle_count)
+        for (var i = 0; i < shuffle_count; i++) {
+            var j = Math.floor(Math.random() * this.question.length);
+            var k = Math.floor(Math.random() * this.question.length);
+            if (j == k) {
+                continue;
+            }
+            var tmp = this.question[j].hai_no;
+            this.question[j].setHaiNo(this.question[k].hai_no);
+            this.question[k].setHaiNo(tmp);
         }
 
         var base_x = (SCREEN_WIDTH - (this.question.length * HAI_WIDTH)) / 2
@@ -435,6 +447,18 @@ var GameScene = Class.create(Scene, {
             this.question[i].y = 200;
             this.addChild(this.question[i]);
         }
+    },
+
+    shuffle_count : function(score) {
+        span = 10;
+        ret = Math.floor(score / span)
+        if (ret < 0) {
+            ret = 0;
+        } else if (ret > 10) {
+            ret = 10;
+        }
+
+        return ret;
     },
 
     answer : function() {
@@ -551,11 +575,7 @@ var GameScene = Class.create(Scene, {
                 this.all_huse(this.question, 1);
             },
             5 : function(){
-                if (this.score < 10) {
-                    this.make_quiz(true);
-                } else {
-                    this.make_quiz();
-                }
+                this.make_quiz();
             },
         });
     },
