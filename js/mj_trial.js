@@ -239,7 +239,8 @@ var GameScene = Class.create(Scene, {
 
         this.limit_age = TIME_LIMIT * core.fps + this.age;
         this.limit_combo = 0;
-        this.combo_count = 1;
+        this.combo_count = 0;
+        this.otestuski_combo_count = 0;
 
         this.score = 0;
 
@@ -474,13 +475,12 @@ var GameScene = Class.create(Scene, {
             chk_flag = false;
         }
 
-//        console.log('answer');
-//        console.log(answer_hai_no_array);
 
         if (chk_flag) {
             this.seikai();
         } else {
-            this.otestuski();
+            this.otestuski(answer_hai_no_array);
+            console.log(this.answer_str(answer_hai_no_array));
         }
 
     },
@@ -500,7 +500,7 @@ var GameScene = Class.create(Scene, {
         this.addChild(this.seikai_label);
 
         var bonus_time = BONUS_TIME;
-        if (this.limit_combo >= this.age ) {
+        if (this.limit_combo >= this.age && this.combo_count > 0) {
             bonus_time += this.combo_count;
             this.combo_count++;
 
@@ -522,6 +522,7 @@ var GameScene = Class.create(Scene, {
         } else {
             this.combo_count = 1;
         }
+        this.otestuski_combo_count = 0
 
         // タイムボーナス
         this.removeChild(this.bonus_label);
@@ -559,7 +560,10 @@ var GameScene = Class.create(Scene, {
         });
     },
 
-    otestuski : function() {
+    otestuski : function(answer_hai_no_array) {
+        this.otestuski_combo_count++;
+        this.combo_count = 0;
+
         this.reset_selection();
         for (var i in this.selection) {
             this.selection[i].disable();
@@ -568,11 +572,19 @@ var GameScene = Class.create(Scene, {
         this.answer_bt.visible = false;
 
         this.removeChild(this.seikai_label);
-        var otetsuki_label = new Label('お手つき！！');
+        var otetsuki_message = ''
+        if (this.otestuski_combo_count == 1) {
+            otetsuki_message = this.hint_str(answer_hai_no_array)
+        } else {
+            otetsuki_message = this.answer_str(answer_hai_no_array)
+        }
+
+        var otetsuki_label = new Label(otetsuki_message);
         otetsuki_label.x = 300;
-        otetsuki_label.y = 500;
+        otetsuki_label.y = 520;
         otetsuki_label.color = 'red';
-        otetsuki_label.font = '50px ' + FONT;
+        otetsuki_label.font = '25px ' + FONT;
+
         otetsuki_label.on('enterframe', function() {
             if (this.age == OTETSUKI_TIME * core.fps) {
                 for (var i in this.scene.selection) {
@@ -584,6 +596,30 @@ var GameScene = Class.create(Scene, {
             }
         });
         this.addChild(otetsuki_label);
+    },
+
+    hint_str : function(answer_hai_no_array) {
+        if (answer_hai_no_array.length == 0) {
+            return 'ノーテンです';
+        }
+
+        // 待ちの数か待ちのうち1つ
+        if (rand(2) == 1) {
+            return `待ちの数は${answer_hai_no_array.length}個です`
+        } else {
+            return `待ちの1つは${getNum(answer_hai_no_array[Math.floor(Math.random() * answer_hai_no_array.length)])}萬です`
+        }
+    },
+
+    answer_str : function(answer_hai_no_array) {
+        if (answer_hai_no_array.length == 0) {
+            return 'ノーテンです';
+        }
+
+        var ret = '';
+        answer_hai_no_array.forEach(element => ret += getNum(element));
+        ret += '萬待ちです';
+        return ret;
     },
 
     summary_tehai : function(tehai_array) {
